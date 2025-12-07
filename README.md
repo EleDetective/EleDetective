@@ -15,9 +15,3 @@ Please come to [Treemap-Based Gridlayout](./Treemap-Based%20Gridlayout), and fol
 Visualization System
 ----------
 Please come to [Visualization System](./Visualization%20System), and follow the README.md in subfolders to setup and run the code.
-
-## Contact
-If you have any problem about our code, feel free to contact
-- EleRefiner@gmail.com
-
-or describe your problem in Issues.
