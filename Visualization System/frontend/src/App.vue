@@ -662,6 +662,14 @@ html, body, #app {
     opacity: 1;
 }
 
+.grid-top-legend {
+    position: absolute;
+    top: 2px;
+    transition: opacity 0.5s ease;
+    opacity: 1;
+    display: flex;
+}
+
 .button {
     position: static;
     cursor: pointer;

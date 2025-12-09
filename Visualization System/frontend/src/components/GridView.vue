@@ -46,6 +46,9 @@
                 />
             </div>
             <div id='main-gridlayout' class='gridlayout' @mouseenter="showButton" @mouseleave="hideButton">
+                <div id='grid-top-legend' class='grid-top-legend' style="left: 10px; height:24px; width:60%">
+                    <svg id='grid-top-legend-svg' style='width: 100%; height: 100%'/>
+                </div>
                 <div id='buttons' class='buttons hidden' style="right: 10px">
                     <div id='prop' title='Check propagation' @click='onPropClick' v-ripple class='small-button' v-show="can_prop || prop_showed">
                         <svg class='icon' width='18px' height='18px' transform='translate(3, 3)' viewBox='0 0 1024 1024'>
@@ -531,6 +534,39 @@ export default {
                 .attr("font-size", legend_size*1/4);
             this.legend = legend;
         },
+        drawTopLegend: function() {
+            let legend_svg = d3.select("#grid-top-legend-svg");
+            let legend_svgsize = legend_svg.node().getBoundingClientRect();
+
+            let stroke_width = 2;
+            let legend_size = 20;
+            legend_size = min(20, legend_svgsize.width/23);
+
+            let categories_super2 = this.$parent.$parent.categories_super2;
+            for(let i=0;i<categories_super2.length;i++) {
+                categories_super2[i].image_x = i/(categories_super2.length-1)*(legend_svgsize.width - stroke_width - legend_size*(2+categories_super2[0].text.length*2/3));
+            }
+            const legend = legend_svg.selectAll(".legend")
+                .data(categories_super2)
+                .enter().append("g")
+                .attr("class", "legend")
+                .attr("transform", (d, i) => `translate(${d.image_x}, 0)`);
+            legend.append("rect")
+                .attr("x", stroke_width/2)
+                .attr("y", legend_svgsize.height-2/3*legend_size-stroke_width/2)
+                .attr("width", legend_size*2/3)
+                .attr("height", legend_size*2/3)
+                .attr("fill", "transparent")
+                .attr("stroke-width", stroke_width)
+                .attr("stroke", d => d.color);
+            legend.append("text")
+                .attr("x", stroke_width/2 + 1*legend_size)
+                .attr("y", legend_svgsize.height-1/3*legend_size-stroke_width/2)
+                .attr("dy", '.35em')
+                .text(d => d.text)
+                .attr("font-size", legend_size*4/5);
+            this.legend = legend;
+        },
         drawGridLayout(grid_info) {
             if (this.in_overview) this.exitOverview();
 
@@ -648,6 +684,7 @@ export default {
                 .then(response => {
                     if(this.first_flag) {
                         this.drawLegend2();
+                        this.drawTopLegend();
                     }
                     this.items = this.$parent.$parent.items;
                     this.items_len = this.$parent.$parent.items_len;
