@@ -550,7 +550,7 @@ export default {
             const box_back_g = d3.select('#box-back-group');
             const that = this;
             const boxes = that.boxes;
-            boxes.sort((a, b) => d3.ascending(a.width*a.height*100+a.id, b.width*b.height*100+b.id));
+            boxes.sort((a, b) => d3.descending(a.width*a.height*100+a.id, b.width*b.height*100+b.id));
             let allBackRects = box_back_g.selectAll('g.imageback').data(boxes, (d) => d.id);
 
             
@@ -612,7 +612,7 @@ export default {
                     if(!that.isShowHierarchy) return null;
                     else return 'none';
                 })
-                .lower();
+                // .lower();
 
             allBackRects
                 .select('rect.bg')
@@ -628,7 +628,7 @@ export default {
             const box_g = d3.select('#box-group');
             const that = this;
             const boxes = that.boxes;
-            boxes.sort((a, b) => d3.ascending(a.width*a.height*100+a.id, b.width*b.height*100+b.id));
+            boxes.sort((a, b) => d3.descending(a.width*a.height*100+a.id, b.width*b.height*100+b.id));
             const allRects = box_g.selectAll('g.imagebox').data(boxes, (d) => d.id);
             const allDropdown = d3.select("#image-dropdown").selectAll(".dropdown-group");
 
@@ -714,7 +714,7 @@ export default {
                 .attr('transform', function(d) {
                     return 'translate(' + d.x + ',' + d.y + ')';
                 })
-                .lower();
+                // .lower();
             // console.log("??", allRects)
 
             allRects
@@ -878,7 +878,7 @@ export default {
                     .property("selected", d2 => d2 === d.class);
             });
 
-            groups.sort((a, b) => d3.ascending(a.deep, b.deep));
+            groups.sort((a, b) => d3.descending(a.deep, b.deep));
             let allGroupRects = box_g.selectAll('g.imagegroup').data(groups, (d) => d.id);
 
             allGroupRects.each(function(d) {
@@ -905,7 +905,7 @@ export default {
                     if(that.isShowHierarchy) return null;
                     else return 'none';
                 })
-                .lower();
+                // .lower();
             
             allGroupRects
                 .transition()
@@ -1435,7 +1435,7 @@ export default {
             let that = this;
 
             let boxes = that.boxes;
-            boxes.sort((a, b) => d3.ascending(a.width*a.height*100+a.id, b.width*b.height*100+b.id));
+            boxes.sort((a, b) => d3.descending(a.width*a.height*100+a.id, b.width*b.height*100+b.id));
             let back_rects = box_back_g.selectAll('g.imageback').data(boxes, (d) => d.id);
             back_rects.exit().remove();
 
@@ -1476,7 +1476,7 @@ export default {
             let that = this;
 
             let boxes = that.boxes;
-            boxes.sort((a, b) => d3.ascending(a.width*a.height*100+a.id, b.width*b.height*100+b.id));
+            boxes.sort((a, b) => d3.descending(a.width*a.height*100+a.id, b.width*b.height*100+b.id));
             let rects = box_g.selectAll('g.imagebox').data(boxes, (d) => d.id);
             rects.exit().remove();
 
