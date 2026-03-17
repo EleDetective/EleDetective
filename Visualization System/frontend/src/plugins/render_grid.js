@@ -634,48 +634,48 @@ const GridRender = function(parent) {
       .attr("stroke-width", 75);
     highlight.raise();
     
-    let tmp_pairs = [];
-    function getRandomItems(arr, num) {
-      const shuffled = arr.slice();
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-      }
-      return shuffled.slice(0, num);
-    }
-    let filter_list = [];
-    for(let item of that.grids) {
-      if((Math.abs(d.x-item.x)<=d.width*4)&&(Math.abs(d.y-item.y)<=d.height*4)) {
-        if(d.sample_id == item.sample_id) continue;
-        filter_list.push(item);
-      }
-    }
-    // let tmp_list = getRandomItems(that.grids, 10);
-    let tmp_list = getRandomItems(filter_list, 10);
-    // for(let item of that.grids.slice(0, 10)) {
-    for(let idx=0;idx<10;idx++) {
-      let item = tmp_list[idx];
-      let confidence = { min: 0.2+0.02*idx, q1: 0.3+0.02*idx, median: 0.45+0.02*idx, q3: 0.65+0.02*idx, max: 0.75+0.02*idx, outliers: [0.15+0.02*idx, 0.8+0.02*idx] }
-      let bin = [0, 0, 0, 0, 0];
-      let scores = [];
-      let boxes = that.parent.items[item.sample_id].boxes;
-      for(let box of boxes) {
-        scores.push(box.score);
-        for(let i=0;i<5;i++) {
-          if(box.score<(i+1)*0.2) {
-            bin[i] += 1/boxes.length;
-            break;
-          }
-        }
-      }
-      // let bin = [0.2, 0.4, 0.1, 0.1, 0];
-      tmp_pairs.push({"source": d, "target": item, "confidence": confidence, "bin": bin, "scores": scores});
-    }
+    // let tmp_pairs = [];
+    // function getRandomItems(arr, num) {
+    //   const shuffled = arr.slice();
+    //   for (let i = shuffled.length - 1; i > 0; i--) {
+    //     const j = Math.floor(Math.random() * (i + 1));
+    //     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    //   }
+    //   return shuffled.slice(0, num);
+    // }
+    // let filter_list = [];
+    // for(let item of that.grids) {
+    //   if((Math.abs(d.x-item.x)<=d.width*4)&&(Math.abs(d.y-item.y)<=d.height*4)) {
+    //     if(d.sample_id == item.sample_id) continue;
+    //     filter_list.push(item);
+    //   }
+    // }
+    // // let tmp_list = getRandomItems(that.grids, 10);
+    // let tmp_list = getRandomItems(filter_list, 10);
+    // // for(let item of that.grids.slice(0, 10)) {
+    // for(let idx=0;idx<10;idx++) {
+    //   let item = tmp_list[idx];
+    //   let confidence = { min: 0.2+0.02*idx, q1: 0.3+0.02*idx, median: 0.45+0.02*idx, q3: 0.65+0.02*idx, max: 0.75+0.02*idx, outliers: [0.15+0.02*idx, 0.8+0.02*idx] }
+    //   let bin = [0, 0, 0, 0, 0];
+    //   let scores = [];
+    //   let boxes = that.parent.items[item.sample_id].boxes;
+    //   for(let box of boxes) {
+    //     scores.push(box.score);
+    //     for(let i=0;i<5;i++) {
+    //       if(box.score<(i+1)*0.2) {
+    //         bin[i] += 1/boxes.length;
+    //         break;
+    //       }
+    //     }
+    //   }
+    //   // let bin = [0.2, 0.4, 0.1, 0.1, 0];
+    //   tmp_pairs.push({"source": d, "target": item, "confidence": confidence, "bin": bin, "scores": scores});
+    // }
 
-    that.parent.map_info = {
-      "source": d,
-      "pairs": tmp_pairs,
-    }
+    // that.parent.map_info = {
+    //   "source": d,
+    //   "pairs": tmp_pairs,
+    // }
     
     if(new_click)that.parent.map_info = null;
 
