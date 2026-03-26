@@ -672,7 +672,7 @@ export default {
                 });
 
             // console.log(that.click_id, node.filter((d) => that.click_id == d.data.name));
-            node.filter((d) => that.click_id == d.data.name).raise();
+            // node.filter((d) => that.click_id == d.data.name).raise();
             
             that.updateSector(node, is_zoom);
         },
