@@ -1244,6 +1244,10 @@ export default {
             if(that.on_draging) {
                 return;
             }
+
+            if((!isEntering)&&(!el.classed('hovering')))return;
+            if(isEntering)d3.selectAll("g.imagebox rect").classed('hovering', false);
+
             el.classed('hovering', isEntering)
                 // .attr(
                 //     'stroke-width',
@@ -1277,6 +1281,10 @@ export default {
             if(that.on_draging) {
                 return;
             }
+            
+            if((!isEntering)&&(!el.classed('hovering')))return;
+            if(isEntering)d3.selectAll("g.imagegroup rect").classed('hovering', false);
+
             el.classed('hovering', isEntering)
 
             if(isEntering) {
