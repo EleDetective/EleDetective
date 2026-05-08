@@ -998,7 +998,8 @@ export default {
                     .attr("transform", function(d2) {
                         let angle = 2*Math.PI*(1-a_bias-(1-a_bias-a_bias2)*(d2.bias+d2.ratio/2));
                         let tmp_score = d2.node.influence;
-                        tmp_score = Math.sqrt(0.1+0.9*tmp_score);
+                        // tmp_score = Math.sqrt(0.1+0.9*tmp_score);
+                        tmp_score = 0.1+0.9*tmp_score;
                         let r = full_radius - (full_radius-parent_radius)/2*tmp_score;
                         let x = r * Math.sin(angle);
                         let y = -r * Math.cos(angle);
@@ -1006,7 +1007,8 @@ export default {
                     })
                     .attr("r", function(d2) {
                         let tmp_score = d2.node.influence;
-                        tmp_score = Math.sqrt(0.1+0.9*tmp_score);
+                        // tmp_score = Math.sqrt(0.1+0.9*tmp_score);
+                        tmp_score = 0.1+0.9*tmp_score;
                         return (full_radius-parent_radius)/2 * tmp_score;
                     });
 
