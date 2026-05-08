@@ -504,7 +504,7 @@ export default {
                 .attr("x", grid_margin)
                 .attr("y", 3/4*legend_size)
                 .attr("dy", '.35em')
-                .text("Avg Confidence Score:")
+                .text("Image Confidence:")
                 .attr("font-size", legend_size*2/5);
 
             const legend = this.legend_svg.selectAll(".legend")

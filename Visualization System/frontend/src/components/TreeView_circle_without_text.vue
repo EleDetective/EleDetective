@@ -152,11 +152,14 @@ export default {
             area_padding: 5,
             focus_ratio: 4,
             class_order: {}, 
+            super_order: {}, 
             confidence_range: [0, 1],
             hand_confidence_range: [0, 1],
             default_confidence_range: [0, 1],
             isShowInfluence: false,
             circle_ratio: 0.8,
+            selected_use_border: false,
+            selected_opacity: {true: 0.9, false: 0.4}
         };
     },
     methods: {
@@ -692,6 +695,31 @@ export default {
                     return 0;
                 });
             
+            node.select(".rect-outer")
+                .transition()
+                .duration(is_zoom?0:that.update_time)
+                .delay(is_zoom?0:that.remove_time)
+                .attr("x", d => -2-that.width_ratio*d.data.width_weight_focus*Math.sqrt(that.scale)/2)
+                .attr("y", d => -2-that.width_ratio*d.data.width_weight_focus*Math.sqrt(that.scale)/2)
+                .attr("width", d => 4+that.width_ratio*d.data.width_weight_focus*Math.sqrt(that.scale))
+                .attr("height", d => 4+that.width_ratio*d.data.width_weight_focus*Math.sqrt(that.scale))
+                .attr("rx", d => min(10, that.width_ratio*d.data.width_weight_focus*Math.sqrt(that.scale)/20))
+                .attr("ry", d => min(10, that.width_ratio*d.data.width_weight_focus*Math.sqrt(that.scale)/20))
+                .attr("fill", "transparent")
+                .attr("stroke", "black")
+                .attr("stroke-width", 1)
+                .attr("stroke-dasharray", function(d) {
+                    let dash = 4;
+                    return `${dash} ${dash}`
+                })
+                .attr("opacity", function(d){
+                    if((that.click_id == d.data.name)||(that.hover_id == d.data.name))
+                        return 1;
+                    // if(((d.data.child_names2.includes(that.click_id))||(d.data.child_names2.includes(that.hover_id)))&&(!("children" in d)||d.children.length==0))
+                    //     return 1;
+                    return 0;
+                })
+                
             node.select(".circle_g").each(function(d) {
 
                 let now_group = d3.select(this);
@@ -728,17 +756,28 @@ export default {
                     .duration(is_zoom?0:that.update_time)
                     .delay(is_zoom?0:that.remove_time)
                     .attr("stroke", function() {
-                        if((that.click_id == d.data.name)||(that.hover_id == d.data.name))
-                            return "black";
-                        if(((d.data.child_names2.includes(that.click_id))||(d.data.child_names2.includes(that.hover_id)))&&(!("children" in d)||d.children.length==0))
-                            return "black";
+                        // if((that.click_id == d.data.name)||(that.hover_id == d.data.name))
+                        //     return "black";
+                        // if(((d.data.child_names2.includes(that.click_id))||(d.data.child_names2.includes(that.hover_id)))&&(!("children" in d)||d.children.length==0))
+                        //     return "black";
                         return "gray";
+                    })
+                    .attr("opacity", function() {
+                        // if((that.click_id == d.data.name)||(that.hover_id == d.data.name))
+                        //     return 1;
+                        // if(((d.data.child_names2.includes(that.click_id))||(d.data.child_names2.includes(that.hover_id)))&&(!("children" in d)||d.children.length==0))
+                        //     return 1;
+                        return 0.5;
                     })
                     .attr("stroke-width", function() {
                         if(d.data.is_focus)
-                            return 4;
+                            return 1;
                         // if((that.click_id == d.data.name)||(that.hover_id == d.data.name))
                         //     return 1;
+                        if((that.click_id == d.data.name)||(that.hover_id == d.data.name))
+                            return 1;
+                        if(((d.data.child_names2.includes(that.click_id))||(d.data.child_names2.includes(that.hover_id)))&&(!("children" in d)||d.children.length==0))
+                            return 1;
                         return 1;
                     })
                     .attr("r", parent_radius)
@@ -753,7 +792,11 @@ export default {
 
                 let r_bias = middle_radius + (parent_radius-middle_radius)*0.1;
                 let a_bias = 0;
-                if(d.parent) a_bias = 1/32;
+                let a_bias2 = 0
+                if(d.parent) {
+                    a_bias = 1/32;
+                    a_bias2 = a_bias - (1-2*a_bias)/(1-d.data.padding)*d.data.padding;
+                }
 
                 let axis_g = now_group.selectAll(".axis_g")
                     .attr("visibility", "visible");
@@ -797,28 +840,51 @@ export default {
                         return 1;
                     })
                     .attr("fill", function(d2) {
-                        let color = d3.color(that.categories_dict[d2.node.class]["color"]);
-                        color.opacity = 0.9;
-                        // TODO 修改判定规则
-                        let tmp_thres = that.thres;
-                        if("thres" in that.categories_dict[d2.node.class]) tmp_thres = that.categories_dict[d2.node.class]["thres"];
-                        if(d2.node.score<tmp_thres)
+                        if(!that.selected_use_border) {
+                            let color = d3.color(that.categories_dict[d2.node.class]["color"]);
+                            color.opacity = that.selected_opacity[true];
+                            // TODO 修改判定规则
+                            let tmp_thres = that.thres;
+                            if("thres" in that.categories_dict[d2.node.class]) tmp_thres = that.categories_dict[d2.node.class]["thres"];
+                            if(d2.node.score<tmp_thres)
+                                color.opacity = that.selected_opacity[false];
+                            return color.toString();
+                        } else {
+                            let color = d3.color(that.categories_dict[d2.node.class]["color"]);
                             color.opacity = 0.5;
-                        return color.toString();
+                            return color.toString();
+                        }
                     })
                     .attr("stroke", function(d2) {
-                        let color = d3.color("transparent");
-                        
-                        // // let color = d3.color("gray");
-                        // let color = d3.color("rgb(128, 128, 128)");
-                        // if((that.click_id == d.data.name)||(that.hover_id == d.data.name))
-                        //     // color = d3.color("black");
-                        //     color = d3.color("rgb(64, 64, 64)");
+                        if(!that.selected_use_border) {
+                            // let color = d3.color("transparent");
+                            // // // let color = d3.color("gray");
+                            // // let color = d3.color("rgb(128, 128, 128)");
+                            // // if((that.click_id == d.data.name)||(that.hover_id == d.data.name))
+                            // //     // color = d3.color("black");
+                            // //     color = d3.color("rgb(64, 64, 64)");
+                            // // if(((that.click_id == d2.node.name)||(that.hover_id == d2.node.name))&&(!("children" in d)||d.children.length==0))
+                            // if((that.click_id == d2.node.name)||(that.hover_id == d2.node.name))
+                            //     color = d3.color("rgb(0, 0, 0)");
 
-                        // if(((that.click_id == d2.node.name)||(that.hover_id == d2.node.name))&&(!("children" in d)||d.children.length==0))
-                        if((that.click_id == d2.node.name)||(that.hover_id == d2.node.name))
-                            color = d3.color("rgb(0, 0, 0)");
-                        return color.toString();
+                            let color = d3.color("transparent");
+                            if((that.click_id == d2.node.name)||(that.hover_id == d2.node.name)) {
+                                color = d3.color(that.categories_dict[d2.node.class]["color"]);
+                                color.r *= 0.5; color.g *= 0.5; color.b *= 0.5;
+                            }
+                            return color.toString();
+                        } else {
+                            let color = d3.color(that.categories_dict[d2.node.class]["color"]);
+                            color.opacity = 1;
+                            let tmp_thres = that.thres;
+                            if("thres" in that.categories_dict[d2.node.class]) tmp_thres = that.categories_dict[d2.node.class]["thres"];
+                            if(d2.node.score<tmp_thres)
+                                color.opacity = 0;
+                            if((that.click_id == d2.node.name)||(that.hover_id == d2.node.name)) {
+                                color.r /= 2; color.g /= 2; color.b /=2;
+                            }
+                            return color.toString();
+                        }
                     })
                     .attr("stroke-dasharray", function(d2) {
                         // let dash = 4;
@@ -829,14 +895,21 @@ export default {
                         return "none";
                     })
                     .attr("stroke-width", function(d2) {
-                        let stroke = Math.min(0.75, 15/d.data.all_children.length);
-                        // // TODO 修改判定规则
-                        // if(d2.node.score<that.thres)
-                        //     return stroke*0.75;
-                        // if(((that.click_id == d2.node.name)||(that.hover_id == d2.node.name))&&(!("children" in d)||d.children.length==0)&&(that.click_id != d.data.name))
-                        if((that.click_id == d2.node.name)||(that.hover_id == d2.node.name))
-                            return Math.max(1.5, stroke);
-                        return stroke;
+                        if(!that.selected_use_border) {
+                            let stroke = Math.min(1, 20/d.data.all_children.length);
+                            // // TODO 修改判定规则
+                            // if(d2.node.score<that.thres)
+                            //     return stroke*0.75;
+                            // if(((that.click_id == d2.node.name)||(that.hover_id == d2.node.name))&&(!("children" in d)||d.children.length==0)&&(that.click_id != d.data.name))
+                            if((that.click_id == d2.node.name)||(that.hover_id == d2.node.name))
+                                return Math.max(1.5, stroke);
+                            return stroke;
+                        } else {
+                            let stroke = Math.min(1.5, 20/d.data.all_children.length);
+                            if((that.click_id == d2.node.name)||(that.hover_id == d2.node.name))
+                                return stroke*2;
+                            return stroke;
+                        }
                     })
                     .attr("d", function(d2) {
                         let tmp_score = d2.node.score;
@@ -845,8 +918,8 @@ export default {
                             .outerRadius(parent_radius*tmp_score+r_bias*(1-tmp_score))
                             // .startAngle(2*Math.PI*d2.bias)
                             // .endAngle(2*Math.PI*(d2.bias+d2.ratio))();
-                            .startAngle(2*Math.PI*(1-a_bias-(1-2*a_bias)*(d2.bias+d2.ratio)))
-                            .endAngle(2*Math.PI*(1-a_bias-(1-2*a_bias)*d2.bias))();
+                            .startAngle(2*Math.PI*(1-a_bias-(1-a_bias-a_bias2)*(d2.bias+d2.ratio)))
+                            .endAngle(2*Math.PI*(1-a_bias-(1-a_bias-a_bias2)*d2.bias))();
                     });
                 
                 sector_g.select(".sector_circle")
@@ -857,42 +930,75 @@ export default {
                         return 1;
                     })
                     .attr("fill", function(d2) {
-                        let color = d3.color(that.categories_dict[d2.node.class]["color"]);
-                        color.opacity = 0.9;
-                        // TODO 修改判定规则
-                        let tmp_thres = that.thres;
-                        if("thres" in that.categories_dict[d2.node.class]) tmp_thres = that.categories_dict[d2.node.class]["thres"];
-                        if(d2.node.score<tmp_thres)
+                        if(!that.selected_use_border) {
+                            let color = d3.color(that.categories_dict[d2.node.class]["color"]);
+                            color.opacity = that.selected_opacity[true];
+                            // TODO 修改判定规则
+                            let tmp_thres = that.thres;
+                            if("thres" in that.categories_dict[d2.node.class]) tmp_thres = that.categories_dict[d2.node.class]["thres"];
+                            if(d2.node.score<tmp_thres)
+                                color.opacity = that.selected_opacity[false];
+                            return color.toString();
+                        } else {
+                            let color = d3.color(that.categories_dict[d2.node.class]["color"]);
                             color.opacity = 0.4;
-                        return color.toString();
+                            return color.toString();
+                        }
                     })
                     .attr("stroke", function(d2) {
-                        let color = d3.color("transparent");
-                        
-                        if((that.click_id == d2.node.name)||(that.hover_id == d2.node.name))
-                            color = d3.color("rgb(0, 0, 0)");
-                        return color.toString();
+                        if(!that.selected_use_border) {
+                            // let color = d3.color("transparent");
+                            // if((that.click_id == d2.node.name)||(that.hover_id == d2.node.name))
+                            //     color = d3.color("rgb(0, 0, 0)");
+                            
+                            let color = d3.color("transparent");
+                            if((that.click_id == d2.node.name)||(that.hover_id == d2.node.name)) {
+                                color = d3.color(that.categories_dict[d2.node.class]["color"]);
+                                color.r *= 0.5; color.g *= 0.5; color.b *= 0.5;
+                            }
+                            return color.toString();
+                        } else {
+                            let color = d3.color(that.categories_dict[d2.node.class]["color"]);
+                            color.opacity = 1;
+                            let tmp_thres = that.thres;
+                            if("thres" in that.categories_dict[d2.node.class]) tmp_thres = that.categories_dict[d2.node.class]["thres"];
+                            if(d2.node.score<tmp_thres)
+                                color.opacity = 0;
+                            
+                            if((that.click_id == d2.node.name)||(that.hover_id == d2.node.name)) {
+                                color.r /= 2; color.g /= 2; color.b /=2;
+                            }
+                            return color.toString();
+                        }
                     })
                     .attr("stroke-dasharray", function(d2) {
                         return "none";
                     })
                     .attr("stroke-width", function(d2) {
-                        let stroke = Math.min(0.75, 15/d.data.all_children.length);
-                        if((that.click_id == d2.node.name)||(that.hover_id == d2.node.name))
-                            return Math.max(1.5, stroke);
-                        return stroke;
+                        if(!that.selected_use_border) {
+                            let stroke = Math.min(1.5, 30/d.data.all_children.length);
+                            if((that.click_id == d2.node.name)||(that.hover_id == d2.node.name))
+                                return Math.max(1.5, stroke);
+                            return stroke;
+                        } else {
+                            let stroke = Math.min(2, 40/d.data.all_children.length);
+                            if((that.click_id == d2.node.name)||(that.hover_id == d2.node.name))
+                                return stroke*2;
+                            return stroke;
+                        }
                     })
                     // .attr("x", function(d2) {
-                    //     let angle = 2*Math.PI*(1-a_bias-(1-2*a_bias)*(d2.bias+d2.ratio/2));
+                    //     let angle = 2*Math.PI*(1-a_bias-(1-a_bias-a_bias2)*(d2.bias+d2.ratio/2));
                     //     return (full_radius+parent_radius)/2 * Math.cos(angle);
                     // })
                     // .attr("y", function(d2) {
-                    //     let angle = 2*Math.PI*(1-a_bias-(1-2*a_bias)*(d2.bias+d2.ratio/2));
+                    //     let angle = 2*Math.PI*(1-a_bias-(1-a_bias-a_bias2)*(d2.bias+d2.ratio/2));
                     //     return -(full_radius+parent_radius)/2 * Math.sin(angle);
                     // })
                     .attr("transform", function(d2) {
-                        let angle = 2*Math.PI*(1-a_bias-(1-2*a_bias)*(d2.bias+d2.ratio/2));
+                        let angle = 2*Math.PI*(1-a_bias-(1-a_bias-a_bias2)*(d2.bias+d2.ratio/2));
                         let tmp_score = d2.node.influence;
+                        tmp_score = Math.sqrt(0.1+0.9*tmp_score);
                         let r = full_radius - (full_radius-parent_radius)/2*tmp_score;
                         let x = r * Math.sin(angle);
                         let y = -r * Math.cos(angle);
@@ -900,8 +1006,35 @@ export default {
                     })
                     .attr("r", function(d2) {
                         let tmp_score = d2.node.influence;
+                        tmp_score = Math.sqrt(0.1+0.9*tmp_score);
                         return (full_radius-parent_radius)/2 * tmp_score;
                     });
+
+                sector_g.select(".sector_triangle")
+                    .transition()
+                    .duration(is_zoom?0:that.update_time)
+                    .delay(is_zoom?0:that.remove_time)
+                    .attr("fill", "gray")
+                    .attr("opacity", function(d2) {
+                        if(d.data.child_names2.length<=1)
+                            return 0;
+                        if((that.click_id == d2.node.name)||(that.hover_id == d2.node.name))
+                            return 1;
+                        return 0;
+                    })
+                    .attr("d", function(d2) {
+                        let size = (full_radius-parent_radius)*0.8;
+                        const h = size * Math.sqrt(3) / 2;
+                        // 创建指向上方的三角形（-90度方向）
+                        return `M 0,0 L ${-size/2},${-h} L ${size/2},${-h} Z`;
+                    })
+                    .attr("transform", function(d2) {
+                        let angle = 2*Math.PI*(1-a_bias-(1-a_bias-a_bias2)*(d2.bias+d2.ratio/2));
+                        let r = full_radius+(full_radius-parent_radius)*0.2;
+                        let x = r * Math.sin(angle);
+                        let y = -r * Math.cos(angle);
+                        return `translate(${x},${y}) rotate(${angle*180/Math.PI})`;
+                    })
             })
             node.select(".edit_g")
                 .attr("visibility", function(d) {
@@ -1274,7 +1407,8 @@ export default {
                     that.confidence_range[1] = Math.min(1, that.confidence_range[1]+0.1);
                     that.confidence_range[0] = Math.max(0, that.confidence_range[0]-0.1);
                     that.hard_confidence_range = [that.confidence_range[0], that.confidence_range[1]];
-                    that.confidence_range[1] += 0.05 * (that.confidence_range[1]-that.confidence_range[0]);
+                    that.confidence_range[1] += 0.15 * (that.confidence_range[1]-that.confidence_range[0]);
+                    that.confidence_range[0] -= 0.1 * (that.confidence_range[1]-that.confidence_range[0]);
                 }
             }
             
@@ -1648,6 +1782,9 @@ export default {
                     .delay(that.remove_time+that.update_time)
                     .attr("opacity", 1);
 
+                new_node.append("rect")
+                    .attr("class", "rect-outer");
+
                 let circle_g = new_node.append("g")
                     .attr("class", "circle_g")
                     .attr("opacity", 0)
@@ -1655,6 +1792,7 @@ export default {
                     .attr("class", "circle-middle");
                 circle_g.append("circle")
                     .attr("class", "circle-outer");
+
                 
                 circle_g.each(function(d) {
                     // console.log("circle", d);
@@ -1662,6 +1800,8 @@ export default {
 
                     let sector_g = now_group.selectAll(".sector_g")
                         .data(d.data.all_children, d2 => d2.node.name);
+
+                    // console.log(d.data.all_children.map(d => [d.node.class, d.node.score, d.node.influence]))
                     let new_sector_g = sector_g.enter()
                         .append("g")
                         .attr("class", "sector_g");
@@ -1723,9 +1863,12 @@ export default {
 
                             that.updateClick(d2.node.name, d.data.name);
                         });
+                    
+                    new_sector_g.append("path")
+                        .attr("class", "sector_triangle");
 
-                    let tmp_d = [0, 0.25, 0.50, 0.75, that.thres];
-                    // let tmp_d = [0, 0.25, 0.50, 0.75];
+                    // let tmp_d = [0, 0.25, 0.50, 0.75, that.thres];
+                    let tmp_d = [0, 0.25, 0.50, 0.75];
                     let axis_g = now_group.selectAll(".axis_g")
                         .data(tmp_d);
                     let new_axis_g = axis_g.enter()
@@ -1911,6 +2054,7 @@ export default {
             node.min_weight = node.width_weight_focus;
 
             node.all_children = [{"node": node, "ratio": 1, "bias": 0, "parent": node}];
+            node.padding = 0;
 
             for(let child of node._children) {
                 this.resetWeight(child);
@@ -1931,8 +2075,10 @@ export default {
                 
                 for(let i=0;i<node.all_children.length;i++)
                 for(let j=i+1;j<node.all_children.length;j++) {
-                    let order1 = that.class_order[node.all_children[i].node.class];
-                    let order2 = that.class_order[node.all_children[j].node.class];
+                    // let order1 = that.class_order[node.all_children[i].node.class];
+                    // let order2 = that.class_order[node.all_children[j].node.class];
+                    let order1 = that.super_order[node.all_children[i].node.class];
+                    let order2 = that.super_order[node.all_children[j].node.class];
                     let flag = false;
                     if(order1 > order2) flag = true;
                     if(!that.isShowInfluence) {
@@ -1962,6 +2108,8 @@ export default {
                     obj.bias = bias;
                     bias += obj.ratio + padding_ratio/Math.max(1, node.all_children.length);
                 }
+
+                node.padding = padding_ratio/Math.max(1, node.all_children.length);
             }
             if(node.children != null && node.children.length>0) {
                 node.separation_weight = [0, 0];
@@ -1974,7 +2122,8 @@ export default {
         resetNodeExpand(node, parent_expand=true) {
             let that = this;
 
-            node.width_weight_o = node.area;
+            // node.width_weight_o = node.area;
+            node.width_weight_o = 1;
             node.width_weight = Math.sqrt(Math.sqrt(node.width_weight_o));
             
             let expand = node.expand||node.tmp_expand;
@@ -2156,7 +2305,8 @@ export default {
                         category_area[key] = 0;
                     }
                     category_cnt[boxes[hierarchy].class] = 1;
-                    category_area[boxes[hierarchy].class] = Math.sqrt(boxes[hierarchy].area);
+                    // category_area[boxes[hierarchy].class] = Math.sqrt(boxes[hierarchy].area);
+                    category_area[boxes[hierarchy].class] = 1;
                     let category_weight = category_area;
                     let tmp_cnt = Object.values(category_weight).reduce((acc, val) => acc + val, 0);
                     let result = {"name": boxes[hierarchy].id, "area": boxes[hierarchy].area, "bbox": boxes[hierarchy].bbox, "deep": deep, "class": boxes[hierarchy].class, "child_index": [hierarchy], "child_names": [boxes[hierarchy].id], "child_names2": [boxes[hierarchy].id], "expand": false, "_children": [], "tmp_expand": false, "category_cnt": category_cnt, "category_area": category_area, "layers": 0, "category_weight": category_weight, "cnt": tmp_cnt};
@@ -2260,7 +2410,8 @@ export default {
                     category_area[key] = 0;
                 }
                 category_cnt[boxes[0].class] = 1;
-                category_area[boxes[0].class] = Math.sqrt(boxes[0].area);
+                // category_area[boxes[0].class] = Math.sqrt(boxes[0].area);
+                category_area[boxes[0].class] = 1;
                 let category_weight = category_area;
                 let tmp_cnt = Object.values(category_weight).reduce((acc, val) => acc + val, 0);
                 h_data = {"name": boxes[0].id, "area": boxes[0].area, "bbox": boxes[0].bbox, "deep": 0, "class": boxes[0].class, "child_index": [0], "child_names": [boxes[0].id], "child_names2": [boxes[0].id], "expand": false, "_children": [], "tmp_expand": false, "category_cnt": category_cnt, "category_area": category_area, "category_weight": category_weight, "layers": 0, "cnt": tmp_cnt}
@@ -2292,13 +2443,15 @@ export default {
         drawLegend() {
             let that = this;
             that.color_legend_svg = d3.select(".color-legend");
+            that.color_legend_svg.selectAll("*").remove();
             that.legend_svg = d3.select(".tree-legend");
+            that.legend_svg.selectAll("*").remove();
 
             let color_legend_svgsize = that.color_legend_svg.node().getBoundingClientRect();
             let stroke_width = 0;
             let check_stroke_width = 1;
             let legend_size = 20;
-            legend_size = min(min(20, color_legend_svgsize.height/3), color_legend_svgsize.width/17);
+            legend_size = min(min(20, color_legend_svgsize.height*0.8/4), color_legend_svgsize.width/17);
 
             that.show_node = {};
             for(let i=0;i<that.categories_super.length;i++) {
@@ -2306,7 +2459,12 @@ export default {
             }
 
             for(let i=0;i<that.categories_super.length;i++) {
-                that.categories_super[i].tree_y = i/(that.categories_super.length-1)*(color_legend_svgsize.height - stroke_width - legend_size);
+                if(this.categories_super.length==1) {
+                    this.categories_super[i].tree_x = 0;
+                    this.categories_super[i].tree_y = 0;
+                    continue;
+                }
+                that.categories_super[i].tree_y = color_legend_svgsize.height*0.2+i/(that.categories_super.length-1)*(color_legend_svgsize.height*0.8 - stroke_width - legend_size);
             }
             const legend = that.color_legend_svg.selectAll(".legend")
                 .data(that.categories_super)
@@ -2343,6 +2501,7 @@ export default {
                 d3.select(this)
                     .select(".check")
                     .style("display", d2 => that.show_node[d2.text]["show"] ? null : "none");
+                that.drawLegend();
                 that.load(that.item);
             });
 
@@ -2353,34 +2512,40 @@ export default {
                 .attr("fill", d => d.color)
                 .attr("stroke-width", stroke_width)
                 .attr("stroke", d => d.color)
-                .attr("opacity", 0.9);
+                .attr("opacity", that.selected_opacity[true]);
+            legend.append("text")
+                .attr("x", stroke_width/2 + legend_size + 1*legend_size)
+                .attr("y", stroke_width+legend_size-1/3*legend_size-stroke_width/2)
+                .attr("dy", '.35em')
+                .text(d => "Selected / ")
+                .attr("font-size", legend_size*4/5);
             legend.append("circle")
-                .attr("cx", (stroke_width+legend_size)*1/3 + legend_size + 1*legend_size)
+                .attr("cx", (stroke_width+legend_size)*1/3 + legend_size + 4*legend_size + 1*legend_size)
                 .attr("cy", stroke_width+legend_size-1/3*legend_size-stroke_width/2)
                 .attr("r", legend_size*1/3)
                 .attr("fill", d => d.color)
                 .attr("stroke-width", stroke_width)
                 .attr("stroke", d => d.color)
-                .attr("opacity", 0.5);
+                .attr("opacity", that.selected_opacity[false]);
             legend.append("text")
-                .attr("x", stroke_width/2 + 2*legend_size + 1*legend_size)
+                .attr("x", stroke_width/2 + 2*legend_size + 4*legend_size  + 1*legend_size)
                 .attr("y", stroke_width+legend_size-1/3*legend_size-stroke_width/2)
                 .attr("dy", '.35em')
-                .text(d => "Selected / Unselected "+d.text)
+                .text(d => "Unselected "+d.text)
                 .attr("font-size", legend_size*4/5);
             
             that.legend_svg.append("defs").selectAll("marker")
                 .data(["arrow-start", "arrow-end"])
                 .enter().append("marker")
                 .attr("id", d => d)
-                .attr("viewBox", "0 -5 10 10")
+                .attr("viewBox", "-3 -6 16 12")
                 .attr("refX", d => d === "arrow-start" ? 0 : 10)
                 .attr("refY", 0)
-                .attr("markerWidth", 5)
-                .attr("markerHeight", 5)
+                .attr("markerWidth", 7)
+                .attr("markerHeight", 6)
                 .attr("orient", "auto")
                 .append("path")
-                .attr("d", d => d === "arrow-start" ? "M10,-5 L00,0 L10,5" :"M0,-5 L10,0 L0,5")
+                .attr("d", d => d === "arrow-start" ? "M10,-6 L-3,0 L10,6" :"M0,-6 L13,0 L0,6")
                 .style("fill", "black");
             
             that.legend_svgsize = that.legend_svg.node().getBoundingClientRect();
@@ -2394,7 +2559,8 @@ export default {
             let legend_start_points = [null, null, null, null];
             let legend_end_points = [null, null, null, null];
             for(let i=0;i<4;i++) {
-                legend_end_points[i] = {x: full_radius*2, y: that.legend_svg_height*(i*2+1)/8};
+                // legend_end_points[i] = {x: full_radius*2, y: that.legend_svg_height*(i*2+1)/8};
+                legend_end_points[i] = {x: full_radius*2, y: that.legend_svg_height*(i*2+2)/8};
             }
 
             let legend_circle_g = that.legend_svg.append("g")
@@ -2417,6 +2583,7 @@ export default {
                 .attr("stroke", function() {
                     return "gray";
                 })
+                .attr("opacity", 0.5)
                 .attr("stroke-width", function() {
                     return 1;
                 })
@@ -2424,12 +2591,37 @@ export default {
             
             let r_bias = middle_radius + (parent_radius-middle_radius)*0.1;
             let a_bias = 0;
+            let a_bias2 = 0;
 
             const arcGenerator = d3.arc()
                 .innerRadius(r_bias);
 
+            // let sample_data = [{node: {name: 0, score: 0.7, influence: 0.9}, bias: 0.975, ratio: 0.05}];
+            let sample_cls = [];
+            for(let key in that.categories_dict) {
+                if(that.show_node[that.categories_dict[key].super]["show"])
+                sample_cls[key] = that.categories_dict[key];
+            }
+            let sample_data = [];
+            // let tmp_n = 15;
+            // for(let i=0;i<tmp_n;i++) {
+            //     let tmp_inf = Math.random();
+            //     let tmp_cls = Object.keys(sample_cls)[Math.floor(i/tmp_n*Object.keys(sample_cls).length)];
+            //     if(i == tmp_n-1) tmp_inf = 0.8;
+            //     sample_data.push({node: {name: i, score: 1-0.8/tmp_n*(i+1), influence: tmp_inf}, cls: tmp_cls, bias: i*(0.80/(2*tmp_n-1))*2+0.10, ratio: 0.03});
+            // }
+            let sample_data2 = [["Label-Icon", 0.9365341067314148, 0.4710436996181586], ["Label-Icon", 0.9359906911849976, 0.4710436996181586], ["Label-Icon", 0.9340275526046753, 0.4710436996181586], ["Label-Icon", 0.9262189865112305, 0.5238650827322868], ["Label-Icon", 0.9223562479019165, 0.4613915994908782], ["Label-Icon", 0.9172195196151733, 0.4710436996181586], ["Embellishment", 0.9155194163322449, 0.04773016546457361], ["Label-Icon", 0.9122298955917358, 0.4900296987696223], ["Label-Icon", 0.8963024020195007, 0.4710436996181586], ["mark", 0.9466344714164734, 0.7866991938905388], ["mark", 0.9375682473182678, 0.7855324565125159], ["mark", 0.9322519302368164, 0.27078913873568095], ["mark", 0.9053567051887512, 0.5074246924056003], ["mark", 0.89686518907547, 0.7733347475604582], ["mark", 0.8294811844825745, 0.6452057700466695], ["mark", 0.6758735179901123, 0.40825201527365296], ["mark", 0.40531739592552185, 0.48058973271107336], ["mark", 0.40136419862508774, 0.7879719983029274], ["axis", 0.35996795445680618, 0.20683071701315228], ["mark", 0.29542595386505127, 0.48058973271107336], ["mark", 0.25105358809232712, 0.48058973271107336], ["Bar Chart", 0.8849958181381226, 0.04773016546457361]];
+            let tmp_n = 22;
+            for(let i=0;i<tmp_n;i++) {
+                let tmp_inf = sample_data2[i][2];
+                let tmp_cls = sample_data2[i][0];
+                if(i == tmp_n-1) tmp_inf = 0.8;
+                sample_data.push({node: {name: i, score: sample_data2[i][1], influence: tmp_inf}, cls: tmp_cls, bias: i*(0.80/(2*tmp_n-1))*2+0.10, ratio: 0.02});
+            }
+
+
             let legend_sector_g = legend_circle_g.selectAll(".legend_sector_g")
-                .data([{node: {name: 0, score: 0.45, influence: 0.9}, bias: 0.925, ratio: 0.15}], d2 => d2.node.name);
+                .data(sample_data, d2 => d2.node.name);
             
             let new_legend_sector_g = legend_sector_g.enter()
                 .append("g")
@@ -2439,32 +2631,36 @@ export default {
                 .append("path")
                 .attr("class", "sector")
                 .attr("fill", function(d2) {
-                    let cls = Object.keys(that.categories_dict)[Object.keys(that.categories_dict).length-1];
+                    // let cls = Object.keys(that.categories_dict)[Object.keys(that.categories_dict).length-1];
+                    let cls = d2.cls;
                     let color = d3.color(that.categories_dict[cls]["color"]);
-                    color.opacity = 0.9;
+                    color.opacity = that.selected_opacity[true];
                     let tmp_thres = that.thres;
                     if("thres" in that.categories_dict[cls]) tmp_thres = that.categories_dict[cls]["thres"];
                     if(d2.node.score<tmp_thres)
-                        color.opacity = 0.5;
+                        color.opacity = that.selected_opacity[false];
                     return color.toString();
                 })
                 .attr("stroke", function(d2) {
-                    let color = d3.color("black");
+                    // let color = d3.color("black");
+                    let color = d3.color(that.categories_dict[d2.cls]["color"]);
+                    color.r *= 0.5; color.g *= 0.5; color.b *= 0.5;
                     return color.toString();
                 })
                 .attr("stroke-dasharray", function(d2) {
                     return "none";
                 })
                 .attr("stroke-width", function(d2) {
-                    let stroke = 0.75;
+                    let stroke = 0;
+                    if(d2.node.name==sample_data.length-1) stroke = 1;
                     return stroke;
                 })
                 .attr("d", function(d2) {
                     let tmp_score = d2.node.score;
                     return arcGenerator
                         .outerRadius(parent_radius*tmp_score+r_bias*(1-tmp_score))
-                        .startAngle(2*Math.PI*(1-a_bias-(1-2*a_bias)*(d2.bias+d2.ratio)))
-                        .endAngle(2*Math.PI*(1-a_bias-(1-2*a_bias)*d2.bias))();
+                        .startAngle(2*Math.PI*(1-a_bias-(1-a_bias-a_bias2)*(d2.bias+d2.ratio)))
+                        .endAngle(2*Math.PI*(1-a_bias-(1-a_bias-a_bias2)*d2.bias))();
                 });
             
             function getArc(radius, startAngle, endAngle) {
@@ -2519,11 +2715,13 @@ export default {
                     return 0.67;
                 })
                 .attr("d", function(d2) {
+                    if(d2.node.name!=sample_data.length-1) return "";
                     let tmp_score = d2.node.score+0.1;
-                    let result = getArc(parent_radius*tmp_score+r_bias*(1-tmp_score), 2*Math.PI*(1-a_bias-(1-2*a_bias)*(d2.bias+d2.ratio)),2*Math.PI*(1-a_bias-(1-2*a_bias)*d2.bias));
+                    let result = getArc(parent_radius*tmp_score+r_bias*(1-tmp_score), 2*Math.PI*(1-a_bias-(1-a_bias-a_bias2)*(d2.bias+d2.ratio)),2*Math.PI*(1-a_bias-(1-a_bias-a_bias2)*d2.bias));
                     legend_start_points[1] = {x: result.middle.x+full_radius, y: result.middle.y+that.legend_svg_height};
                     return result.arcPath;
                 })
+                .attr("visibility", "hidden")
                 .attr("fill", "none")
                 .attr("marker-start", "url(#arrow-start)")
                 .attr("marker-end", "url(#arrow-end)");
@@ -2539,41 +2737,66 @@ export default {
                     return 0.67;
                 })
                 .attr("d", function(d2) {
+                    if(d2.node.name!=sample_data.length-1) return "";
+
                     let tmp_score = d2.node.score;
-                    let result = getRadius(r_bias, parent_radius*tmp_score+r_bias*(1-tmp_score), 2*Math.PI*(1-a_bias-(1-2*a_bias)*d2.bias), parent_radius-r_bias);
+                    let result = getRadius(r_bias, parent_radius*tmp_score+r_bias*(1-tmp_score), 2*Math.PI*(1-a_bias-(1-a_bias-a_bias2)*d2.bias), (parent_radius-r_bias)/2);
+                    // let result = getRadius(r_bias, parent_radius*1+r_bias*(1-1), 2*Math.PI*(1-a_bias-(1-a_bias-a_bias2)*0), 0);
+                    
                     legend_start_points[2] = {x: result.middle.x+full_radius, y: result.middle.y+that.legend_svg_height};
                     return result.linePath;
                 })
                 .attr("fill", "none")
                 .attr("marker-start", "url(#arrow-start)")
-                .attr("marker-end", "url(#arrow-end)");
+                .attr("marker-end", "url(#arrow-end)")
+            
+            legend_circle_g
+                .append("path")
+                .attr("class", "sector-axis")
+                .attr("stroke", function() {
+                    let color = d3.color("black");
+                    return color.toString();
+                })
+                .attr("stroke-width", 1.33)
+                .attr("d", function() {
+                    let result = getRadius(r_bias, parent_radius+(parent_radius-r_bias)/3, 2*Math.PI*(1-a_bias-(1-a_bias-a_bias2)*0), 0);
+                    return result.linePath;
+                })
+                .attr("fill", "none")
+                // .attr("marker-start", "url(#arrow-start)")
+                .attr("marker-end", "url(#arrow-end)")
             
             new_legend_sector_g.append("circle")
                 .attr("class", "sector_circle")
                 .attr("fill", function(d2) {
-                    let cls = Object.keys(that.categories_dict)[Object.keys(that.categories_dict).length-1];
+                    // let cls = Object.keys(that.categories_dict)[Object.keys(that.categories_dict).length-1];
+                    let cls = d2.cls;
                     let color = d3.color(that.categories_dict[cls]["color"]);
-                    color.opacity = 0.9;
+                    color.opacity = that.selected_opacity[true];
                     let tmp_thres = that.thres;
                     if("thres" in that.categories_dict[cls]) tmp_thres = that.categories_dict[cls]["thres"];
                     if(d2.node.score<tmp_thres)
-                        color.opacity = 0.4;
+                        color.opacity = that.selected_opacity[false];
                     return color.toString();
                 })
                 .attr("stroke", function(d2) {
-                    let color = d3.color("black");
+                    // let color = d3.color("black");
+                    let color = d3.color(that.categories_dict[d2.cls]["color"]);
+                    color.r *= 0.5; color.g *= 0.5; color.b *= 0.5;
                     return color.toString();
                 })
                 .attr("stroke-dasharray", function(d2) {
                     return "none";
                 })
                 .attr("stroke-width", function(d2) {
-                    let stroke = 0.75
+                    let stroke = 0;
+                    if(d2.node.name==sample_data.length-1) stroke = 1;
                     return stroke;
                 })
                 .attr("transform", function(d2) {
-                    let angle = 2*Math.PI*(1-a_bias-(1-2*a_bias)*(d2.bias+d2.ratio/2));
+                    let angle = 2*Math.PI*(1-a_bias-(1-a_bias-a_bias2)*(d2.bias+d2.ratio/2));
                     let tmp_score = d2.node.influence;
+                    tmp_score = Math.sqrt(0.1+0.9*tmp_score);
                     let r = full_radius - (full_radius-parent_radius)/2*tmp_score;
                     let x = r * Math.sin(angle);
                     let y = -r * Math.cos(angle);
@@ -2581,6 +2804,7 @@ export default {
                 })
                 .attr("r", function(d2) {
                     let tmp_score = d2.node.influence;
+                    tmp_score = Math.sqrt(0.1+0.9*tmp_score);
                     return (full_radius-parent_radius)/2 * tmp_score;
                 });
             
@@ -2595,8 +2819,10 @@ export default {
                     return 0.67;
                 })
                 .attr("d", function(d2) {
-                    let angle = 2*Math.PI*(1-a_bias-(1-2*a_bias)*(d2.bias+d2.ratio/2));
+                    if(d2.node.name!=sample_data.length-1) return "";
+                    let angle = 2*Math.PI*(1-a_bias-(1-a_bias-a_bias2)*(d2.bias+d2.ratio/2));
                     let tmp_score = d2.node.influence;
+                    tmp_score = Math.sqrt(0.1+0.9*tmp_score);
                     let r = full_radius - (full_radius-parent_radius)/2*tmp_score;
                     let x = r * Math.sin(angle);
                     let y = -r * Math.cos(angle);
@@ -2608,8 +2834,8 @@ export default {
                 .attr("marker-start", "url(#arrow-start)")
                 .attr("marker-end", "url(#arrow-end)");
 
-            let tmp_d = [0, 0.25, 0.50, 0.75, that.thres];
-            // let tmp_d = [0, 0.25, 0.50, 0.75];
+            // let tmp_d = [0, 0.25, 0.50, 0.75, that.thres];
+            let tmp_d = [0, 0.25, 0.50, 0.75, 1];
             let legend_axis_g = legend_circle_g.selectAll(".axis_g")
                 .data(tmp_d);
             
@@ -2622,15 +2848,49 @@ export default {
                 .attr("fill", "none")
                 .attr("stroke", "gray")
                 .attr("opacity", 0.5)
-                .attr("stroke-width", (d) => d==that.thres?1.5:0.5)
+                .attr("stroke-width", (d) => d==1?0:(d==that.thres?1.5:0.5))
                 .attr("r", d2 => parent_radius*d2+r_bias*(1-d2));
+            new_legend_axis_g.append("text")
+                .attr("class", (d2, i) => `axis-text text-${i}`)
+                .attr("color", "black")
+                .attr("text-anchor", "end")
+                .attr("y", d2 => -(parent_radius*d2+r_bias*(1-d2)))
+                .attr("dx", "-.15em")
+                .attr("dy", "-.1em")
+                .attr("font-size", that.legend_svg_height/12)
+                .text(d2 => d2==0?d2:d2.toFixed(2));
+            new_legend_axis_g.append("line")
+                .attr("class", (d2, i) => `axis-tick tick-${i}`)
+                .attr("stroke", "black")
+                .attr("stroke-width", 0.75)
+                .attr("x1", -that.legend_svg_height/40)
+                .attr("y1", d2 => -(parent_radius*d2+r_bias*(1-d2)))
+                .attr("x2", that.legend_svg_height/40)
+                .attr("y2", d2 => -(parent_radius*d2+r_bias*(1-d2)))
+                .attr("font-size", that.legend_svg_height/12)
+                .text(d2 => d2==0?d2:d2.toFixed(2));
+            legend_circle_g.append("text")
+                .attr("class", "axis-label")
+                .attr("color", "black")
+                .attr("text-anchor", "end")
+                .attr("x", -(parent_radius-r_bias)/15)
+                .attr("y", -parent_radius-(parent_radius-r_bias)/3)
+                // .attr("dx", ".15em")
+                .attr("dy", ".7em")
+                .attr("font-size", that.legend_svg_height/12*1.1)
+                .attr("font-weight", 600)
+                .text("Confidence");
             
             legend_start_points[3] = polarToCartesian(full_radius, that.legend_svg_height, parent_radius*that.thres+r_bias*(1-that.thres), Math.PI*5/12);
             
             let legend_texts = ["Influence Score", "Bounding Box Area", "Confidence Score", "Confidence Threshold"];
+            let legend_text1s = ["Influence", "Bounding", "Confidence", "Confidence"];
+            let legend_text2s = ["Score", "Box Area", "Score", "Threshold"];
             let legend_lines = [];
-            for(let i=0;i<4;i++) {
-                legend_lines.push({start: legend_start_points[i], end: legend_end_points[i], text: legend_texts[i]});
+            // for(let i=0;i<4;i++) {
+            for(let i=0;i<2;i++) {
+                i = ([0, 2])[i];
+                legend_lines.push({start: legend_start_points[i], end: legend_end_points[i], text: legend_texts[i], text1: legend_text1s[i], text2: legend_text2s[i]});
             }
 
             let legend_line_g = that.legend_svg.selectAll(".legend_line_g")
@@ -2657,14 +2917,51 @@ export default {
                 .attr("stroke", "black")
                 .attr("stroke-width", 0.5);
             
-            let legend_font_size = Math.min(that.legend_svg_height/5, (that.legend_svg_width-2*full_radius)/10);
+            function getTextWidth(text, font) {
+                const canvas = document.createElement("canvas");
+                const ctx = canvas.getContext("2d");
+                ctx.font = font;
+                const metrics = ctx.measureText(text);
+                return metrics.width;
+            }
+
+            // let legend_font_size = Math.min(that.legend_svg_height/5, (that.legend_svg_width-2*full_radius)/10);
+            let legend_font_size = Math.min(that.legend_svg_height/10, (that.legend_svg_width-2*full_radius)/10);
+            // new_legend_line_g.append("text")
+            //     .attr("x", d => d.end.x)
+            //     .attr("y", d => d.end.y)
+            //     .attr("dy", ".35em")
+            //     .attr("text-anchor", "start")
+            //     .text(d => d.text)
+            //     .attr("font-size", legend_font_size);
             new_legend_line_g.append("text")
                 .attr("x", d => d.end.x)
                 .attr("y", d => d.end.y)
-                .attr("dy", ".35em")
+                .attr("dx", function(d) {
+                    let l1 = getTextWidth(d.text1, legend_font_size*1.5+'px "Helvetica Neue", Helvetica, Arial, sans-serif');
+                    let l2 = getTextWidth(d.text2, legend_font_size*1.5+'px "Helvetica Neue", Helvetica, Arial, sans-serif');
+                    if(l1<l2)return (l2-l1)/2;
+                    return 0;
+                })
+                .attr("dy", "-.1em")
                 .attr("text-anchor", "start")
-                .text(d => d.text)
-                .attr("font-size", legend_font_size);
+                .text(d => d.text1)
+                .attr("font-weight", 300)
+                .attr("font-size", legend_font_size*1.5);
+            new_legend_line_g.append("text")
+                .attr("x", d => d.end.x)
+                .attr("y", d => d.end.y)
+                .attr("dx", function(d) {
+                    let l1 = getTextWidth(d.text1, legend_font_size*1.5+'px "Helvetica Neue", Helvetica, Arial, sans-serif');
+                    let l2 = getTextWidth(d.text2, legend_font_size*1.5+'px "Helvetica Neue", Helvetica, Arial, sans-serif');
+                    if(l2<l1)return (l1-l2)/2;
+                    return 0;
+                })
+                .attr("dy", ".8em")
+                .attr("text-anchor", "start")
+                .text(d => d.text2)
+                .attr("font-weight", 300)
+                .attr("font-size", legend_font_size*1.5);
         },
         load(item) {
             this.click_id = -1;
@@ -2686,10 +2983,18 @@ export default {
     },
     mounted() {
         this.class_order = {};
+        this.super_class_order = {};
+        this.super_order = {};
         for(let i=0;i<this.$parent.$parent.categories.length;i++) {
             this.class_order[this.$parent.$parent.categories[i]["name"]] = i;
         }
-        console.log("order", this.class_order);
+        for(let i=0;i<this.$parent.$parent.categories_super.length;i++) {
+            this.super_class_order[this.$parent.$parent.categories_super[i]["text"]] = i;
+        }
+        for(let i=0;i<this.$parent.$parent.categories.length;i++) {
+            this.super_order[this.$parent.$parent.categories[i]["name"]] = this.super_class_order[this.$parent.$parent.categories[i]["super"]];
+        }
+        // console.log("order", this.class_order);
 
         let card = document.querySelector('.svg-info')
         let tmp = card.style.maxHeight;
@@ -2837,12 +3142,12 @@ export default {
 .datainfo-svg {
     display: block;
     width: 100%;
-    height: calc(100% - 80px);
+    height: calc(100% - 110px);
 }
 
 #control-tree {
     width: 100%;
-    height: 80px;
+    height: 110px;
     display: flex;
 }
 

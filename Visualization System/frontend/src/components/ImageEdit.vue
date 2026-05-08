@@ -86,7 +86,7 @@
                                     <path d="M754.2 151.5h-89.5v42.7h89.5c59.5 0 108 48.4 108 108v67.6h42.7v-67.6c0-83.1-67.6-150.7-150.7-150.7zM862.2 737.3c0 59.5-48.4 108-108 108h-89.5V888h89.5c83.1 0 150.7-67.6 150.7-150.7v-67.6h-42.7v67.6zM166.3 737.8v-67.6h-42.7v67.6c0 83.1 67.6 150.7 150.7 150.7h89.5v-42.7h-89.5c-59.5 0-108-48.4-108-108zM247.6 387.8h294.2v42.7H247.6z" p-id="1938" fill="white"></path><path d="M773.6 789.4l30.2-30.2-190.1-190.6c32.7-44.8 52-99.9 52-159.5 0-149.7-121.6-271.3-271.3-271.3-149.3 0-271.3 121.6-271.3 271.3 0 149.3 121.6 271.3 271.3 271.3 74.5 0 142.3-30.3 191.4-79.3l187.8 188.3zM394.4 637.7c-126 0-228.6-102.5-228.6-228.6s102.5-228.6 228.6-228.6S623 283.1 623 409.2 520.5 637.7 394.4 637.7z" p-id="1939" fill="white"></path>
                                 </svg>
                             </div>
-                            <div class='gap'></div>
+                            <!-- <div class='gap'></div>
                             <div id='image_add' title='Add box' @click='addBox' v-ripple class='small-button'>
                                 <svg class='icon' width='18px' height='18px' transform='translate(3, 3)' viewBox='0 0 1024 1024'>
                                     <path d="M896 704h-192V512H640v192H448v64h192v192h64v-192h192v-64z" fill="white" p-id="7056"></path><path d="M448 960H64V64h832v448h-64V128H128v768h320v64z" fill="white" p-id="7057"></path>
@@ -97,7 +97,7 @@
                                 <svg class='icon' width='18px' height='18px' transform='translate(3, 3)' viewBox='0 0 1024 1024'>
                                     <path d="M607.897867 768.043004c-17.717453 0-31.994625-14.277171-31.994625-31.994625L575.903242 383.935495c0-17.717453 14.277171-31.994625 31.994625-31.994625s31.994625 14.277171 31.994625 31.994625l0 351.94087C639.892491 753.593818 625.61532 768.043004 607.897867 768.043004z" fill="white" p-id="2351"></path><path d="M415.930119 768.043004c-17.717453 0-31.994625-14.277171-31.994625-31.994625L383.935495 383.935495c0-17.717453 14.277171-31.994625 31.994625-31.994625 17.717453 0 31.994625 14.277171 31.994625 31.994625l0 351.94087C447.924744 753.593818 433.647573 768.043004 415.930119 768.043004z" fill="white" p-id="2352"></path><path d="M928.016126 223.962372l-159.973123 0L768.043004 159.973123c0-52.980346-42.659499-95.983874-95.295817-95.983874L351.94087 63.989249c-52.980346 0-95.983874 43.003528-95.983874 95.983874l0 63.989249-159.973123 0c-17.717453 0-31.994625 14.277171-31.994625 31.994625s14.277171 31.994625 31.994625 31.994625l832.032253 0c17.717453 0 31.994625-14.277171 31.994625-31.994625S945.73358 223.962372 928.016126 223.962372zM319.946246 159.973123c0-17.545439 14.449185-31.994625 31.994625-31.994625l320.806316 0c17.545439 0 31.306568 14.105157 31.306568 31.994625l0 63.989249L319.946246 223.962372 319.946246 159.973123 319.946246 159.973123z" fill="white" p-id="2353"></path><path d="M736.048379 960.010751 288.123635 960.010751c-52.980346 0-95.983874-43.003528-95.983874-95.983874L192.139761 383.591466c0-17.717453 14.277171-31.994625 31.994625-31.994625s31.994625 14.277171 31.994625 31.994625l0 480.435411c0 17.717453 14.449185 31.994625 31.994625 31.994625l448.096758 0c17.717453 0 31.994625-14.277171 31.994625-31.994625L768.215018 384.795565c0-17.717453 14.277171-31.994625 31.994625-31.994625s31.994625 14.277171 31.994625 31.994625l0 479.231312C832.032253 916.835209 789.028725 960.010751 736.048379 960.010751z" fill="white" p-id="2354"></path>
                                 </svg>
-                            </div>
+                            </div> -->
                         </div>
                         <div class="show_hierarchy_switch">
                             <!-- <el-switch
@@ -2155,29 +2155,71 @@ export default {
 
         let stroke_width = 2;
         let legend_size = 20;
-        legend_size = min(20, legend_svgsize.width/27);
+        // legend_size = min(20, legend_svgsize.width/27);
+        legend_size = min(20, legend_svgsize.width/30);
 
+        function getTextWidth(text, font) {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            ctx.font = font;
+            const metrics = ctx.measureText(text);
+            return metrics.width;
+        }
+
+        let cols = 2;
+        let rows = Math.ceil(this.categories_super2.length/cols);
+        let longest_text = "";
         for(let i=0;i<this.categories_super2.length;i++) {
-            // this.categories_super2[i].image_x = i/(this.categories_super2.length-1)*(legend_svgsize.width - stroke_width - legend_size*8);
-            this.categories_super2[i].image_x = i/(this.categories_super2.length-1)*(legend_svgsize.width - stroke_width - legend_size*(2+this.categories_super2[0].text.length*2/3));
-            // this.categories_super2[i].image_x = i/(this.categories_super2.length-1)*(legend_svgsize.width - stroke_width - legend_size*4);
+            if(i%cols != cols-1) continue;
+            let len = getTextWidth("Selected  /  Unselected "+this.categories_super2[i].text, legend_size*4/5+'px "Helvetica Neue", Helvetica, Arial, sans-serif');
+            if(len>longest_text)
+                longest_text = len;
+        }
+        for(let i=0;i<this.categories_super2.length;i++) {
+            // if(this.categories_super2==1) {
+            //     this.categories_super2[i].image_x = 0;
+            // } else {
+            //     this.categories_super2[i].image_x = i/(this.categories_super2.length-1)*(legend_svgsize.width - stroke_width - legend_size*2 - getTextWidth(this.categories_super2[this.categories_super2.length-1].text, legend_size*4/5+'px "Helvetica Neue", Helvetica, Arial, sans-serif'););
+            // }
+            
+            if(cols==1) {
+                this.categories_super2[i].image_x = 0;
+            } else {
+                // this.categories_super2[i].image_x = i % cols * legend_svgsize.width/cols;
+                this.categories_super2[i].image_x = i % cols/(cols-1)*(legend_svgsize.width - stroke_width - legend_size*2 - longest_text);
+            }
+            if(rows==1) {
+                this.categories_super2[i].image_y = legend_svgsize.height - stroke_width - legend_size;
+            } else {
+                this.categories_super2[i].image_y = Math.floor(i/cols)/(rows-1)*(legend_svgsize.height - stroke_width - legend_size);
+            }
         }
         const legend = legend_svg.selectAll(".legend")
             .data(this.categories_super2)
             .enter().append("g")
             .attr("class", "legend")
-            .attr("transform", (d, i) => `translate(${d.image_x}, 0)`);
+            // .attr("transform", (d, i) => `translate(${d.image_x}, 0)`);
+            .attr("transform", (d, i) => `translate(${d.image_x}, ${d.image_y})`);
         legend.append("rect")
             .attr("x", stroke_width/2)
-            .attr("y", legend_svgsize.height-2/3*legend_size-stroke_width/2)
+            // .attr("y", legend_svgsize.height-2/3*legend_size-stroke_width/2)
+            .attr("y", stroke_width+legend_size-2/3*legend_size-stroke_width/2)
             .attr("width", legend_size*2/3)
             .attr("height", legend_size*2/3)
             .attr("fill", "transparent")
             .attr("stroke-width", stroke_width)
             .attr("stroke", d => d.color);
-        legend.append("rect")
+        legend.append("text")
             .attr("x", stroke_width/2 + legend_size)
-            .attr("y", legend_svgsize.height-2/3*legend_size-stroke_width/2)
+            // .attr("y", legend_svgsize.height-1/3*legend_size-stroke_width/2)
+            .attr("y", stroke_width+legend_size-1/3*legend_size-stroke_width/2)
+            .attr("dy", '.35em')
+            .text(d => "Selected / ")
+            .attr("font-size", legend_size*4/5);
+        legend.append("rect")
+            .attr("x", stroke_width/2 + legend_size + 4*legend_size)
+            // .attr("y", legend_svgsize.height-2/3*legend_size-stroke_width/2)
+            .attr("y", stroke_width+legend_size-2/3*legend_size-stroke_width/2)
             .attr("width", legend_size*2/3)
             .attr("height", legend_size*2/3)
             .attr("fill", "transparent")
@@ -2185,10 +2227,11 @@ export default {
             .attr("stroke-dasharray", "1.5 1.5")
             .attr("stroke", d => d.color);
         legend.append("text")
-            .attr("x", stroke_width/2 + 2*legend_size)
-            .attr("y", legend_svgsize.height-1/3*legend_size-stroke_width/2)
+            .attr("x", stroke_width/2 + 2*legend_size + 4*legend_size)
+            // .attr("y", legend_svgsize.height-1/3*legend_size-stroke_width/2)
+            .attr("y", stroke_width+legend_size-1/3*legend_size-stroke_width/2)
             .attr("dy", '.35em')
-            .text(d => d.text)
+            .text(d => "Unselected "+d.text)
             .attr("font-size", legend_size*4/5);
         this.legend = legend;
 
@@ -2363,7 +2406,7 @@ export default {
 #svg {
     display: block;
     width: 100%;
-    height: calc(100% - 21px);
+    height: calc(100% - 40px);
 }
 
 #image-flow {
@@ -2371,13 +2414,13 @@ export default {
     left: 0;
     top: 0;
     width: 100%;
-    height: calc(100% - 21px);
+    height: calc(100% - 40px);
     pointer-events: none;
 }
 
 #legend-svg-image {
     width: 100%;
-    height: 21px;
+    height: 40px;
 }
 
 #category-label {
