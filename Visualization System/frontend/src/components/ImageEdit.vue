@@ -1,5 +1,32 @@
 <template>
     <div class="ImageEdit">
+        <button class="tutorial-button" type="button" title="Tutorial" aria-label="Tutorial" @click="openTutorialVideo" v-ripple>
+            <svg class="tutorial-button-svg" viewBox="0 0 125 36" role="img" aria-hidden="true">
+                <rect x="1.5" y="1.5" width="122" height="33" rx="6" fill="#838383" stroke="#737373" stroke-width="1.5"></rect>
+                <path d="M16 9.5h9.2c2.1 0 3.8 1.7 3.8 3.8v13.2c0-1.5-1.2-2.7-2.7-2.7H16V9.5z" fill="#ffffff" opacity="0.96"></path>
+                <path d="M32 9.5h9.2v14.3H30.7c-1.5 0-2.7 1.2-2.7 2.7V13.3c0-2.1 1.7-3.8 4-3.8z" fill="#ffffff" opacity="0.82"></path>
+                <path d="M28.5 12.5v14" fill="none" stroke="#838383" stroke-width="1.4" stroke-linecap="round"></path>
+                <path d="M18.8 13.8h6.4M18.8 17.6h6.4M32 13.8h6.4M32 17.6h6.4" fill="none" stroke="#838383" stroke-width="1.2" stroke-linecap="round"></path>
+                <text x="49" y="22.8" fill="#ffffff" font-size="16" font-weight="700" font-family="Microsoft YaHei, sans-serif">Tutorial</text>
+            </svg>
+        </button>
+        <div class="tutorial-modal-backdrop" v-if="showTutorialVideo">
+            <div class="tutorial-modal" role="dialog" aria-modal="true" aria-label="Tutorial video">
+                <button class="tutorial-close-button" type="button" title="Close" aria-label="Close" @click="closeTutorialVideo" v-ripple>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M6.4 5.1 12 10.7l5.6-5.6 1.3 1.3-5.6 5.6 5.6 5.6-1.3 1.3-5.6-5.6-5.6 5.6-1.3-1.3 5.6-5.6-5.6-5.6 1.3-1.3z" fill="currentColor"></path>
+                    </svg>
+                </button>
+                <video
+                    ref="tutorialVideo"
+                    class="tutorial-video"
+                    src="/tutorial.mp4"
+                    controls
+                    autoplay
+                    playsinline
+                ></video>
+            </div>
+        </div>
 <!--        <div>-->
 <!--            <p style="text-align: left;">-->
 <!--                <span class="sub-title" style="color: #4e4e4e;"> Infographic Chart </span>-->
@@ -267,6 +294,7 @@ export default {
             nowImageSrc: "",
             selectedLayer: 'Origin',
             layer_options: ['Origin', 'Layer1', 'Layer2'],
+            showTutorialVideo: false,
         }
     },
     computed: {
@@ -311,6 +339,25 @@ export default {
         }
     },
     methods: {
+        openTutorialVideo: function() {
+            this.showTutorialVideo = true;
+            this.$nextTick(() => {
+                const video = this.$refs.tutorialVideo;
+                if(!video)return;
+                video.currentTime = 0;
+                video.volume = 1;
+                const playPromise = video.play();
+                if(playPromise)playPromise.catch(() => {});
+            });
+        },
+        closeTutorialVideo: function() {
+            const video = this.$refs.tutorialVideo;
+            if(video) {
+                video.pause();
+                video.currentTime = 0;
+            }
+            this.showTutorialVideo = false;
+        },
         updateLayer: function() {
             if(this.selectedLayer == "Origin") {
                 this.nowImageSrc = this.imageSrc;
@@ -2249,9 +2296,93 @@ export default {
 
 .ImageEdit {
     display: inline-block;
+    position: relative;
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
+}
+
+.tutorial-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 120;
+    width: 125px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    overflow: hidden;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.tutorial-button:focus-visible {
+    outline: 2px solid #4e4e4e;
+    outline-offset: 2px;
+}
+
+.tutorial-button-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.tutorial-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.82);
+}
+
+.tutorial-modal {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    padding: 0;
+    background-color: #000000;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.tutorial-close-button {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    z-index: 2001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    border-radius: 50%;
+    color: #ffffff;
+    background-color: rgba(0, 0, 0, 0.68);
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.32);
+}
+
+.tutorial-close-button svg {
+    width: 24px;
+    height: 24px;
+}
+
+.tutorial-video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background-color: #000000;
+    border-radius: 0;
 }
 
 .sample-panel-content {
