@@ -630,11 +630,12 @@ class OutlierBiasedBlueNoiseSampling(SamplingBase):
 
 
 class OutlierBiasedDensityBasedSampling(SamplingBase):
-    def __init__(self, sampling_rate, outlier_score=None, alpha=1, beta=1):
+    def __init__(self, sampling_rate, outlier_score=None, alpha=1, beta=1, probabilities=None):
         super(OutlierBiasedDensityBasedSampling, self).__init__(sampling_rate)
         self.outlier_score = outlier_score
         self.alpha = alpha
         self.beta = beta
+        self.probabilities = probabilities
 
     def sample(self, data, category):
         n = data.shape[0]
@@ -643,6 +644,9 @@ class OutlierBiasedDensityBasedSampling(SamplingBase):
             perm = np.random.permutation(n)
             selected_indexes = perm[:m]
             return selected_indexes
+
+        if self.probabilities is not None:
+            return np.random.choice(n, round(n * self.sampling_rate), replace=False, p=self.probabilities)
 
         if self.outlier_score is None:
             self.outlier_score = get_default_outlier_scores(data, category)
@@ -660,6 +664,7 @@ class OutlierBiasedDensityBasedSampling(SamplingBase):
             radius_of_k_neighbor[i] = ((radius_of_k_neighbor[i] - minD) * 1.0 / (maxD - minD)) * 0.5 + 0.5
         prob = self.alpha * radius_of_k_neighbor + self.beta * self.outlier_score
         prob = prob / prob.sum()
+        self.last_probabilities = prob
         selected_indexes = np.random.choice(n, m, replace=False, p=prob)
         return selected_indexes
 

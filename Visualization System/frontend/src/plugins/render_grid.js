@@ -2,6 +2,24 @@
 import * as d3 from "d3";
 import { GridLayout } from "./layout_grid";
 
+function layoutThumbnail(item, categories) {
+  const [width, height] = item.image_size;
+  const colors = Object.fromEntries(categories.map(category => [category.name, category.color]));
+  const svg = d3.create('svg')
+    .attr('xmlns', 'http://www.w3.org/2000/svg')
+    .attr('viewBox', `0 0 ${width} ${height}`);
+  svg.append('rect').attr('width', width).attr('height', height).attr('fill', 'white');
+  svg.selectAll('.box').data(item.boxes.filter(box => !box.unselected)
+    .sort((a, b) => b.width * b.height - a.width * a.height))
+    .join('rect').attr('class', 'box')
+    .attr('x', box => box.x).attr('y', box => box.y)
+    .attr('width', box => box.width).attr('height', box => box.height)
+    .attr('fill', 'none')
+    .attr('stroke', box => colors[box.class])
+    .attr('stroke-width', Math.max(width, height) / 180);
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg.node().outerHTML)}`;
+}
+
 const GridRender = function(parent) {
   let that = this;
   that.parent = parent;
@@ -160,9 +178,11 @@ const GridRender = function(parent) {
       if ((sample_id == null) || (grid.sample_id == sample_id)) {
         grid.detection_category = that.detection_items[grid.sample_id].category;
         grid.detection_boxes = that.detection_items[grid.sample_id].boxes;
+        if (grid.img) grid.img = layoutThumbnail(that.detection_items[grid.sample_id], that.parent.$parent.$parent.categories2);
       }
     });
     that.update_detection_grids(sample_id);
+    that.e_grids2.select('image').attr('xlink:href', grid => grid.img);
   };
 
   that.update_info_from_parent = function() {
@@ -300,7 +320,7 @@ const GridRender = function(parent) {
         }
       });
       // console.log(chosen_names, chosen_ids);
-      that.parent.fetchImages({names: chosen_names, ids: chosen_ids, batch: true});
+      that.render_images([], chosen_ids);
     } else that.image_history = that.image_records;
 
     setTimeout(function() {
@@ -328,21 +348,22 @@ const GridRender = function(parent) {
     that.image_records = new Set();
     if (chosen_ids === null) {
       that.grids.forEach(grid => {
-        grid.img = `data:image/jpeg;base64,${images[grid.name]}`;
+        grid.img = layoutThumbnail(that.detection_items[grid.sample_id], that.parent.$parent.$parent.categories2);
         that.image_records.add(grid.sample_id);
       });
     } else {
-      chosen_ids.forEach((id, i) => {
-        that.grids[that.layout.id_map[id]].img = `data:image/jpeg;base64,${images[i]}`;
+      chosen_ids.forEach(id => {
+        const grid = that.grids[that.layout.id_map[id]];
+        grid.img = layoutThumbnail(that.detection_items[grid.sample_id], that.parent.$parent.$parent.categories2);
         that.image_records.add(that.grids[that.layout.id_map[id]].sample_id);
       });
-      if (images.length === 1 && that.current_hover === that.grids[that.layout.id_map[chosen_ids[0]]].name) {
+      if (chosen_ids.length === 1 && that.current_hover === that.grids[that.layout.id_map[chosen_ids[0]]].name) {
         let meta_image = document.querySelector('#meta-image');
         let image_container = document.querySelector('#meta-image-container');
 //        meta_image.style.width = 'auto';
 //        meta_image.style.height = 'auto';
         if(meta_image != null) {
-          meta_image.src = `data:image/jpeg;base64,${images[0]}`;
+          meta_image.src = that.grids[that.layout.id_map[chosen_ids[0]]].img;
           let containerRatio = image_container.clientWidth / image_container.clientHeight;
           let imageRatio = meta_image.naturalWidth / meta_image.naturalHeight;
           if (containerRatio < imageRatio) {
@@ -683,7 +704,7 @@ const GridRender = function(parent) {
     
     if(that.render_image) {
       if (d.img === '') {
-        that.parent.fetchImages({names: [d.name], ids: [d.index]});
+        that.render_images([], [d.index]);
       }
       else {
         let meta_image = document.querySelector('#meta-image');

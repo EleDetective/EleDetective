@@ -87,7 +87,7 @@
                         </svg>
                     </div>
                     <div class='gap' v-show="use_image"></div>
-                    <div id='images' title='Show/hide images' @click='onImageButtonClick' v-ripple v-show="use_image"
+                    <div id='images' title='Show/hide layouts' @click='onImageButtonClick' v-ripple v-show="use_image"
                         class='small-button'>
                         <svg t="1685968804315" class="icon" viewBox="0 0 1024 1024" width='18px' height='18px'
                             transform='translate(3, 3)'>
@@ -166,7 +166,7 @@ export default {
             allow_zoomout: false,
             allow_details: false,
             show_details: false,
-            show_images: false,
+            show_images: true,
             svg_width: 1920,
             svg_height: 1080,
             create_ani: 500,
