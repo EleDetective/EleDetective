@@ -3,6 +3,9 @@ import random
 import math
 import time
 import tempfile
+import gzip
+import json
+from pathlib import Path
 from joblib import hash as hash_inputs
 from annoy import AnnoyIndex
 from sklearn.neighbors import NearestNeighbors
@@ -19,6 +22,11 @@ class DataSampler(object):
         self.test_without_sample = False
         self.sampler = Sampler()
         self.sampling_method = OutlierBiasedDensityBasedSampling # MultiClassBlueNoiseSamplingFAISS
+        self.precomputed_probabilities = {}
+        precomputed = Path(__file__).resolve().parents[3] / 'assets/infographic-top-sampling.json.gz'
+        if precomputed.exists():
+            with gzip.open(precomputed, 'rt') as stream:
+                self.precomputed_probabilities = json.load(stream)['probabilities']
         # self.sampling_method = RandomSampling # MultiClassBlueNoiseSamplingFAISS
         self.cache_root = './cache'
         if not os.path.exists(self.cache_root):
@@ -54,14 +62,20 @@ class DataSampler(object):
             labels = np.zeros(len(ids), dtype='int')
         if len(ids) == 0:
             return np.array([]).astype('int')
+        probabilities = None
+        if self.sampling_method is OutlierBiasedDensityBasedSampling:
+            # Original KNN-derived weights work at new viewport sizes, too.
+            probabilities = self.precomputed_probabilities.get(hash_inputs((features, labels)))
         # Static features can reuse the original sampling result across page loads.
         cache_dir = os.path.join(getattr(self, 'cache_path', self.cache_root), 'sampling-v1')
-        key = hash_inputs((self.sampling_method.__name__, features, ids, num, labels))
+        key = hash_inputs((self.sampling_method.__name__, features, ids, num, labels, probabilities))
         cache_file = os.path.join(cache_dir, key + '.npy')
         if os.path.exists(cache_file):
             return np.load(cache_file, allow_pickle=False)
         self.sampler.set_data(features, labels)
         rs_args = {'sampling_rate': min((num + 1) / len(ids), 1)}
+        if self.sampling_method is OutlierBiasedDensityBasedSampling:
+            rs_args['probabilities'] = probabilities
         self.sampler.set_sampling_method(self.sampling_method, **rs_args)
         sampled_ids = self.sampler.get_samples_idx()[:num]
         sampled_ids = ids[sampled_ids]
