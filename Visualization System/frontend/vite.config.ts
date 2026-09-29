@@ -8,7 +8,12 @@ export default defineConfig({
   ],
   server: {
     host: '0.0.0.0',
-    port: 5173, // 可以自定义端口
+    port: Number(process.env.ELEDETECTIVE_PORT || 5180),
+    strictPort: true,
+    proxy: {
+      '/backend': { target: 'http://127.0.0.1:' + (process.env.ELEDETECTIVE_BACKEND_PORT || 5102), rewrite: path => path.replace(/^\/backend/, ''), timeout: 0, proxyTimeout: 0 },
+      '/grid': { target: 'http://127.0.0.1:12121', rewrite: path => path.replace(/^\/grid/, ''), timeout: 0, proxyTimeout: 0 },
+    },
     watch: {
       usePolling: true
     }

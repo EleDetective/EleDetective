@@ -27,7 +27,6 @@ import * as Global from '../plugins/global';
 import { mapState, mapActions } from 'vuex';
 import GridView from './GridView.vue';
 import SampleView from './SampleView.vue';
-import ListView from './ListView.vue';
 window.d3 = d3;
 
 export default {
@@ -38,7 +37,6 @@ export default {
         VCol,
         GridView,
         SampleView,
-        ListView,
     },
     // props: ['item', 'items', 'selectedItemIndex'],
     props: ['item', 'selectedItemIndex'],
