@@ -24,7 +24,8 @@ def get_data_ids():
     tmp_hierarchy = data_control.get_hierarchy()
     new_hierarchy = {}
     for id in ids:
-        new_hierarchy[id] = tmp_hierarchy[id]
+        info = data_control.sample_list[id]
+        new_hierarchy[id] = dict(tmp_hierarchy[id], image_size=[info['width'], info['height']])
     data = {"message": "Hello from Flask!", "data": new_hierarchy, "tot": len(tmp_hierarchy)}
     return jsonify(data)
 
@@ -44,6 +45,9 @@ def apply_edit():
     edit_record = content["edit_record"]
     ids = content["ids"]
     result = data_control.apply_edit(edit_record, ids)
+    for id, hierarchy in result.items():
+        info = data_control.sample_list[int(id)]
+        result[id] = dict(hierarchy, image_size=[info['width'], info['height']])
 
     return jsonify({"status": "success", "updated": result})
 

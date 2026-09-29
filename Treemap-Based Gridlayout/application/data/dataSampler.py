@@ -2,6 +2,8 @@ import numpy as np
 import random
 import math
 import time
+import tempfile
+from joblib import hash as hash_inputs
 from annoy import AnnoyIndex
 from sklearn.neighbors import NearestNeighbors
 from application.utils.sampling.Sampler import *
@@ -52,11 +54,21 @@ class DataSampler(object):
             labels = np.zeros(len(ids), dtype='int')
         if len(ids) == 0:
             return np.array([]).astype('int')
+        # Static features can reuse the original sampling result across page loads.
+        cache_dir = os.path.join(getattr(self, 'cache_path', self.cache_root), 'sampling-v1')
+        key = hash_inputs((self.sampling_method.__name__, features, ids, num, labels))
+        cache_file = os.path.join(cache_dir, key + '.npy')
+        if os.path.exists(cache_file):
+            return np.load(cache_file, allow_pickle=False)
         self.sampler.set_data(features, labels)
         rs_args = {'sampling_rate': min((num + 1) / len(ids), 1)}
         self.sampler.set_sampling_method(self.sampling_method, **rs_args)
         sampled_ids = self.sampler.get_samples_idx()[:num]
         sampled_ids = ids[sampled_ids]
+        os.makedirs(cache_dir, exist_ok=True)
+        with tempfile.NamedTemporaryFile(dir=cache_dir, delete=False) as stream:
+            np.save(stream, sampled_ids, allow_pickle=False)
+        os.replace(stream.name, cache_file)
         return sampled_ids
 
     def getNearestHangIndex(self, X, sampled_index, hang_index, selected=None, getNowlabels=None):
