@@ -4,15 +4,14 @@ Codes for the method and system described in our paper [Interactive Target Eleme
 
 System Startup (Fig. 9)
 ----------
-👉 **The commands below help replicate Fig. 9 by launching the EleDetective visualization system shown in the paper.**
+👉 **The command below helps replicate Fig. 9 by launching the EleDetective visualization system shown in the paper.**
 
 ![Fig. 9. EleDetective: the grid visualization (a) and the scene tree visualization (b).](./assets/fig9.png)
 
-Run on Ubuntu 22.04 or newer (x86_64; no GPU required):
+From the repository root, run on Ubuntu 22.04 or newer (x86_64; no GPU required):
 
 ```bash
-git clone --branch grsi-single-command-4class https://github.com/EleDetective/EleDetective.git
-bash EleDetective/run_demo.sh
+bash run_demo.sh
 ```
 
 The launcher installs dependencies, downloads the prepared 10,000-image dataset (5.91 GiB; 19.02 GiB extracted), and starts the full system, including correction propagation.
