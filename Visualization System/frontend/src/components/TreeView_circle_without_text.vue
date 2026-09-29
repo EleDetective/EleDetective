@@ -2422,7 +2422,7 @@ export default {
                 // if("influence_within" in item) {
                 //     h_data["influence"] = item["influence_within"][0].length/Math.max(max_influence, 1);
                 // }
-                h_data["influence"] = that.$parent.$parent.selectedInfluence[0].quantile;
+                h_data["influence"] = that.$parent.$parent.selectedInfluence[0]?.quantile ?? 0;
                 h_data["unselected"] = boxes[0].unselected;
             }
 
@@ -2964,6 +2964,14 @@ export default {
                 .text(d => d.text2)
                 .attr("font-weight", 300)
                 .attr("font-size", legend_font_size*1.5);
+        },
+        refreshInfluence() {
+            if (!this.h_data) return;
+            for (const node of this.getDFSList(this.h_data, '_children')) {
+                if (node.class !== 'group') node.influence = this.$parent.$parent.selectedInfluence[node.name]?.quantile ?? 0;
+            }
+            this.resetNode();
+            this.updateTree();
         },
         load(item) {
             this.click_id = -1;

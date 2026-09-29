@@ -57,6 +57,8 @@ export default {
             selectedHierarchy: null,
             selectedInfluence: {},
             selectedWithinInfluence: {},
+            influenceRequest: null,
+            influenceStatus: 'ready',
             quantiles: {},
             timer: null,
             tmp_edit_record: {},
@@ -263,31 +265,38 @@ export default {
         },
         selectItem: function(index) {
             // console.log(index, items.value);
+            this.influenceRequest?.abort();
+            const request = new AbortController();
+            this.influenceRequest = request;
+            this.influenceStatus = 'loading';
+            this.checkCrossInfluencePre(-1);
+            this.$refs.child2.$refs.child_grid.prop_showed = false;
+            this.selectedInfluence = {};
+            this.selectedWithinInfluence = {};
+            if (this.selectedItem !== this.items[index]) this.wait_cnt = 0;
+            this.can_undo = this.can_redo = this.can_apply = false;
+            this.selectedItemIndex = index;
+            this.selectedImage = this.items[index].image;
+            this.selectedBoxes = this.items[index].boxes;
+            this.selectedHierarchy = this.items[index].hierarchy;
+            this.selectedItem = this.items[index];
 
             console.log("get sample influence");
             
             axios.post(this.backend_url+'/api/get_sample_influence', {
                 id: index,
                 target_ids: this.$refs.child2.$refs.child_grid.gridlayout.sample_ids
-            })
+            }, {signal: request.signal})
             .then(response => {
+                if (this.influenceRequest !== request) return;
                 console.log("Sample Influence Back:", response.data);
-                this.checkCrossInfluencePre(-1);
-                this.$refs.child2.$refs.child_grid.prop_showed = false;
 
                 this.selectedInfluence = response.data["sample_influence"];
                 this.selectedWithinInfluence = response.data["within_influence"];
 
-                this.wait_cnt = 0;
-                this.can_undo = false;
-                this.can_redo = false;
-                this.can_apply = false;
-
-                this.selectedItemIndex = index;
-                this.selectedImage = this.items[index].image;
-                this.selectedBoxes = this.items[index].boxes;
-                this.selectedHierarchy = this.items[index].hierarchy;
-                this.selectedItem = this.items[index];
+                this.$refs.child1.$refs.child_tree.refreshInfluence();
+                this.influenceStatus = 'ready';
+                this.update_button_able();
                 // console.log(this.selectedItem, this.selectedItemIndex);
 
 
@@ -311,10 +320,16 @@ export default {
 
             })
             .catch(error => {
+                if (this.influenceRequest !== request || axios.isCancel(error)) return;
+                this.influenceStatus = 'error';
                 console.error("Error sending data:", error);
             });
         },
         update_button_able: function() {
+            if (this.influenceStatus !== 'ready') {
+                this.can_undo = this.can_redo = this.can_apply = false;
+                return;
+            }
             if(this.selectedItemIndex in this.tmp_edit_record) {
                 this.can_undo = (this.tmp_edit_record[this.selectedItemIndex]["now"] > 0);
                 this.can_redo = (this.tmp_edit_record[this.selectedItemIndex]["now"] < this.tmp_edit_record[this.selectedItemIndex]["len"]);
