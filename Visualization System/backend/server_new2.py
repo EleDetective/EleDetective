@@ -3,6 +3,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import json
 import sys
+import os
 sys.path.append('data')
 from dataControl_new2 import DataControl
 
@@ -79,8 +80,8 @@ if __name__ == '__main__':
     data_control = DataControl(with_text=True)
     # data_control = DataControl(with_text=True, use_prop=False)
 
-    data_control.load_data("data/datasets/YOUR_DATASET", model="dreamsim") # TO FILL
+    data_control.load_data(os.environ.get("ELEDETECTIVE_DATASET", "data/datasets/YOUR_DATASET"), model="dreamsim")
 
     
     print("done")
-    app.run(debug=True, host='0.0.0.0', port=5102)
+    app.run(host='127.0.0.1', port=int(os.environ.get("ELEDETECTIVE_BACKEND_PORT", "5102")), threaded=False)

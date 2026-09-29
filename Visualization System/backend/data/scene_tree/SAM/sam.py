@@ -7,8 +7,9 @@ import random
 from shapely.geometry import Polygon, MultiPolygon
 from skimage import measure, morphology, filters, io
 import shapely
+import os
 
-SAM_MODEL_PATH = "YOU/SAM/MODEL/PATH"
+SAM_MODEL_PATH = os.environ.get("ELEDETECTIVE_SAM_CHECKPOINT", "YOU/SAM/MODEL/PATH")
 
 def has_intersection(bounds1, bounds2):
     x1, y1, x2, y2 = bounds1[0], bounds1[1], bounds1[2], bounds1[3]

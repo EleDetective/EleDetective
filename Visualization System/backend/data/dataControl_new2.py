@@ -22,7 +22,7 @@ category_dict_super = {1: "text", 2: "text", 3: "text", 4: "HRO", 5: "HRO", 6: "
     10: "chart", 11: "chart", 12: "chart", 13: "chart", 14: "chart", 15: "chart", 16: "chart", 17: "chart", 18: "chart", 19: "chart", 20: "chart"}  # TO FILL upper level class
 category_dict = {1: "Annotation", 2: "Title", 3: "Source", 4: "Label-Icon", 5: "Embellishment", 6: "legend", 7: "axis", 8: "gridline", 9: "mark", 
     10: "Bar Chart", 11: "Line Chart", 12: "Radar Chart", 13: "Area Chart", 14: "Pie Chart", 15: "Proportional Chart", 16: "Treemap", 17: "ScatterPlot", 18: "Pyramid & Funnel Chart", 19: "Sankey Diagram", 20: "Heatmap"}  # TO FILL lower level class
-image_pre = "/YOUR/IMAGE/FOLDER/PATH/"  # TO FILL
+image_pre = os.environ.get("ELEDETECTIVE_IMAGE_DIR", "/YOUR/IMAGE/FOLDER/PATH/").rstrip("/") + "/"
 similarity_scale_dict = {i: 0.7 for i in range(1, len(category_dict)+1)}
 
 class DataControl:
@@ -71,15 +71,14 @@ class DataControl:
             candidate_path = os.path.join(path, "candidate_"+str(part)+".pkl")
             hierarchy_path = os.path.join(path, "hierarchy_"+str(part)+".json")
         
-        with open(pred_path, 'r') as file:
-            self.annotations_pred = json.load(file)
-
         with open(info_path, 'r') as file:
             self.sample_list = json.load(file)["images"]
         
         use_mask = True
         print("candidate start")
         if not os.path.exists(candidate_ori_path):
+            with open(pred_path, 'r') as file:
+                self.annotations_pred = json.load(file)
             if part == -1 or not before_part:
                 self.candidate = getCandidate(self.annotations_pred, self.sample_list, candidate_ori_path, use_mask, with_text=self.with_text)
             else:

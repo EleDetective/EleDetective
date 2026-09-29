@@ -1011,6 +1011,7 @@ def mergeOtherCandidate(hierarchy, dict_list, shape_dict=None, img_shape=None, v
             overlap_list = []
 
             if not hasattr(target_obj, "outer_obj"):
+                getShape(target_obj, recalc=False)
                 getInnerShape(target_obj)
                 
             for child in target_obj.children:

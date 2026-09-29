@@ -21,3 +21,10 @@ cosin_difference.bin
 save_records
 *.pyd
 lsa.cpython-38-x86_64-linux-gnu.so
+.eledetective/
+node_modules/
+*.cpython-*.so
+Visualization System/frontend/public/images
+Visualization System/backend/full_edit_record.json
+Visualization System/backend/new_hierarchy.json
+Visualization System/backend/new_candidate.pkl

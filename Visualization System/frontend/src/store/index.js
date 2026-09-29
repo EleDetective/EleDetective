@@ -4,7 +4,7 @@ import axios from "axios";
 
 export default createStore({
   state: {
-    server_url: "http://YOUR_GRIDLAYOUT_ADDR:12121",  // TO FILL
+    server_url: "/grid",
     gridlayout: {},
     cur_node: -1,
     images: [],

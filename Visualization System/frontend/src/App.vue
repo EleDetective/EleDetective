@@ -46,7 +46,7 @@ export default {
     },
     data: function() {
         return {
-            backend_url: "http://YOUR_BACKEND_ADDR:5102",  // TO FILL
+            backend_url: "/backend",
             // backend_url: "http://localhost:5000",
             items: null,
             items_len: 0,

@@ -1,4 +1,5 @@
 import torch
+import os
 from dreamsim import dreamsim
 from PIL import Image
 import torchvision.transforms as transforms
@@ -9,7 +10,7 @@ def dreamsim_load_model():
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     print(device)
-    model, preprocess = dreamsim(pretrained=True, cache_dir="/YOUR/DREAMSIM/CACHE/FOLDER", device=device)  # TO FILL
+    model, preprocess = dreamsim(pretrained=True, cache_dir=os.environ.get("ELEDETECTIVE_DREAMSIM_CACHE", "/YOUR/DREAMSIM/CACHE/FOLDER"), device=device)
     
     return {"model": model, "preprocess": preprocess, "device": device}
 
