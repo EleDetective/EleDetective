@@ -32,8 +32,12 @@
 <!--                <span class="sub-title" style="color: #4e4e4e;"> Infographic Chart </span>-->
 <!--            </p>-->
 <!--        </div>-->
-        <p class="sub-title" style="color: #4e4e4e;">Infographic</p>
-        <div class="sample-panel-content">
+        <p class="sub-title" style="color: #4e4e4e;">Infographic
+            <span v-if="$parent.influenceStatus !== 'ready'" role="status" style="font-size: 13px; font-weight: normal; margin-left: 12px;">
+                {{ $parent.influenceStatus === 'loading' ? 'Loading influence…' : 'Influence unavailable — select the image to retry.' }}
+            </span>
+        </p>
+        <div class="sample-panel-content" :inert="$parent.influenceStatus !== 'ready'" :aria-busy="$parent.influenceStatus === 'loading'">
             <div style="width: 52.5%; height: calc(100% - 25px); margin-top: 10px; display: inline-block;">
                 <TreeView
                     ref="child_tree"
@@ -2002,6 +2006,7 @@ export default {
             const image = new Image();
             image.src = that.imageSrc;
             image.onload = () => {
+                if (image.getAttribute('src') !== that.imageSrc) return;
                 console.log(that.imageSrc, image);
                 let node = {
                     boxes: boxes,
